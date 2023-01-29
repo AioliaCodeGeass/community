@@ -1,5 +1,7 @@
 package com.nowcoder.community.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.util.Date;
@@ -12,21 +14,22 @@ import java.util.Date;
 @Data
 public class DiscussPost
 {
+    @TableId(value="id",type= IdType.AUTO)
     private Integer id;
 
-    private int userId;
+    private Integer userId;
 
     private String title;
 
     private String content;
 
-    private int type;
+    private Integer type;
 
-    private int status;
+    private Integer status;
 
     private Date createTime;
 
-    private int commentCount;
+    private Integer commentCount;
 
     private double score;
 }

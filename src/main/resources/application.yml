@@ -16,6 +16,18 @@ spring:
       maximum-pool-size: 15
       minimum-idle: 5
       idle-timeout: 30000
+  mail:
+    host: smtp.sina.com
+    port: 465
+    username: aiolia_geass@sina.com
+    password: 28c589389c3db012
+    protocol: smtps
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: true
+
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
@@ -28,3 +40,9 @@ logging:
   level:
     com.nowcoder.community: debug
   file: D:/JavaEE/牛客论坛/log/community.log
+
+community:
+  path:
+    domain: http://localhost:8081
+    upload: D:/JavaEE/牛客论坛/upload
+

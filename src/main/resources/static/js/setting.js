@@ -1,10 +1,10 @@
 $(function(){
-	$("form").submit(check_register);
+	$("form").submit(check_setting);
 	$("input").focus(clear_error);
 });
 
-function check_register() {
-	var pwd1 = $("#password").val();
+function check_setting() {
+	var pwd1 = $("#new-password").val();
 	var pwd2 = $("#confirm-password").val();
 	if(pwd1 != pwd2) {
 		$("#confirm-password").addClass("is-invalid");

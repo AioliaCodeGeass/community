@@ -9,29 +9,19 @@ import java.util.Date;
 /**
  * @author aiolia
  * @version 1.0
- * @create 2023/1/25
+ * @create 2023/1/28
  */
 @Data
-public class User
+public class LoginTicket
 {
     @TableId(value="id",type= IdType.AUTO)
     private Integer id;
 
-    private String username;
+    private Integer userId;
 
-    private String password;
-
-    private String salt;
-
-    private String email;
-
-    private Integer type;
+    private String ticket;
 
     private Integer status;
 
-    private String activationCode;
-
-    private String headerUrl;
-
-    private Date createTime;
+    private Date expired;
 }
