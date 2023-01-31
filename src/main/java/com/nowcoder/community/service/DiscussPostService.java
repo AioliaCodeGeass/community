@@ -17,4 +17,10 @@ public interface DiscussPostService extends IService<DiscussPost>
     public List<DiscussPost> findDiscussPosts(int userId, int offset, int limit);
 
     public int findDiscussPostRows(int userId);
+
+    public int addDiscussPost(DiscussPost post);
+
+    public DiscussPost findDiscussPostById(int id);
+
+    public int updateCommentCount(int id,int commentCount);
 }

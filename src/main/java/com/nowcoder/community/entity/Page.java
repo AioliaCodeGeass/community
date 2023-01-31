@@ -40,10 +40,10 @@ public class Page
      * 获取当前页的起始行
      * @return
      */
-//    public int getOffset()
-//    {
-//        return (current-1)*limit;
-//    }
+    public int getOffset()
+    {
+        return (current-1)*limit;
+    }
 
     /**
      * 获取总页数

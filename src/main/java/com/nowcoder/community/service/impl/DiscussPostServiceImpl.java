@@ -7,7 +7,10 @@ import com.nowcoder.community.dao.DiscussPostMapper;
 import com.nowcoder.community.dto.Result;
 import com.nowcoder.community.entity.DiscussPost;
 import com.nowcoder.community.service.DiscussPostService;
+import com.nowcoder.community.util.SensitiveFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 
 import java.util.List;
 
@@ -19,6 +22,9 @@ import java.util.List;
 @Service
 public class DiscussPostServiceImpl extends ServiceImpl<DiscussPostMapper, DiscussPost> implements DiscussPostService
 {
+    @Autowired
+    private SensitiveFilter sensitiveFilter;
+
     public List<DiscussPost> findDiscussPosts(int userId, int offset, int limit)
     {
         int pageNumber=offset;
@@ -49,4 +55,37 @@ public class DiscussPostServiceImpl extends ServiceImpl<DiscussPostMapper, Discu
         return count;
     }
 
+    @Override
+    public int addDiscussPost(DiscussPost post)
+    {
+        if(post==null)
+        {
+            throw new IllegalArgumentException("参数不能为空！");
+        }
+        //转义HTML标记
+        post.setTitle(HtmlUtils.htmlEscape(post.getTitle()));
+        post.setContent(HtmlUtils.htmlEscape(post.getContent()));
+        //过滤敏感词
+        post.setTitle(sensitiveFilter.filter(post.getTitle()));
+        post.setContent(sensitiveFilter.filter(post.getContent()));
+        //保存讨论帖
+        boolean isSuccess= this.save(post);
+        return isSuccess==true?1:0;
+    }
+
+    @Override
+    public DiscussPost findDiscussPostById(int id)
+    {
+        return this.getById(id);
+    }
+
+    @Override
+    public int updateCommentCount(int id, int commentCount)
+    {
+        DiscussPost post=new DiscussPost();
+        post.setId(id);
+        post.setCommentCount(commentCount);
+        boolean isSuccess=this.updateById(post);
+        return isSuccess==true?1:0;
+    }
 }
