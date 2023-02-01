@@ -2,7 +2,10 @@ package com.nowcoder.community.controller;
 
 import com.nowcoder.community.annotation.LoginRequired;
 import com.nowcoder.community.entity.User;
+import com.nowcoder.community.service.FollowService;
+import com.nowcoder.community.service.LikeService;
 import com.nowcoder.community.service.UserService;
+import com.nowcoder.community.util.CommunityConstant;
 import com.nowcoder.community.util.CommunityUtil;
 import com.nowcoder.community.util.HostUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +34,7 @@ import java.util.Map;
 @Slf4j
 @Controller
 @RequestMapping("/user")
-public class UserController
+public class UserController implements CommunityConstant
 {
     @Value("${community.path.upload}")
     private String uploadPath;
@@ -45,86 +48,126 @@ public class UserController
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private LikeService likeService;
+
+    @Autowired
+    private FollowService followService;
+
     @LoginRequired
-    @RequestMapping(value="setting",method = RequestMethod.GET)
+    @RequestMapping(value = "setting", method = RequestMethod.GET)
     public String getSettingPage()
     {
         return "/site/setting";
     }
 
     @LoginRequired
-    @RequestMapping(value="/upload",method = RequestMethod.POST)
+    @RequestMapping(value = "/upload", method = RequestMethod.POST)
     public String uploadHeader(MultipartFile headerImage, Model model)
     {
-        if(headerImage==null)
+        if (headerImage == null)
         {
-            model.addAttribute("error","您还没有选择图片！");
+            model.addAttribute("error", "您还没有选择图片！");
             return "/site/setting";
         }
         //获取图片后缀
-        String fileName=headerImage.getOriginalFilename();
-        String suffix=fileName.substring(fileName.lastIndexOf("."));
-        if(StringUtils.isBlank(suffix))
+        String fileName = headerImage.getOriginalFilename();
+        String suffix = fileName.substring(fileName.lastIndexOf("."));
+        if (StringUtils.isBlank(suffix))
         {
-            model.addAttribute("error","文件的格式不正确！");
+            model.addAttribute("error", "文件的格式不正确！");
             return "/site/setting";
         }
         //生成随机文件名
-        fileName= CommunityUtil.generateUUID()+suffix;
+        fileName = CommunityUtil.generateUUID() + suffix;
         //确定文件存放的路径
-        File dest=new File(uploadPath+"/"+fileName);
-        try{
+        File dest = new File(uploadPath + "/" + fileName);
+        try
+        {
             //存储文件
             headerImage.transferTo(dest);
-        }catch(IOException e)
+        } catch (IOException e)
         {
-            log.error("上传文件失败："+e.getMessage());
-            throw new RuntimeException("上传文件失败，服务器发生异常!"+e);
+            log.error("上传文件失败：" + e.getMessage());
+            throw new RuntimeException("上传文件失败，服务器发生异常!" + e);
         }
         //更新当前用户的头像的路径
-        User user= HostUtil.getUser();
-        String headerUrl=domain+contextPath+"/user/header/"+fileName;
+        User user = HostUtil.getUser();
+        String headerUrl = domain + contextPath + "/user/header/" + fileName;
         user.setHeaderUrl(headerUrl);
         userService.updateById(user);
 
         return "redirect:/index";
     }
 
-    @RequestMapping(value="/header/{fileName}",method=RequestMethod.GET)
+    @RequestMapping(value = "/header/{fileName}", method = RequestMethod.GET)
     public void getHeader(@PathVariable("fileName") String fileName, HttpServletResponse response)
     {
         //服务器存放路径
-        fileName=uploadPath+"/"+fileName;
-        String suffix=fileName.substring(fileName.lastIndexOf("."));
+        fileName = uploadPath + "/" + fileName;
+        String suffix = fileName.substring(fileName.lastIndexOf("."));
         //响应图片
-        response.setContentType("image/"+suffix);
+        response.setContentType("image/" + suffix);
         try (
                 FileInputStream fis = new FileInputStream(fileName);
                 OutputStream os = response.getOutputStream();
-        ) {
+        )
+        {
             byte[] buffer = new byte[1024];
             int b = 0;
-            while ((b = fis.read(buffer)) != -1) {
+            while ((b = fis.read(buffer)) != -1)
+            {
                 os.write(buffer, 0, b);
             }
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
             log.error("读取头像失败: " + e.getMessage());
         }
     }
 
-    @RequestMapping(value="updatePassword",method=RequestMethod.POST)
-    public String updatePassword(Model model,String oldPassword,String newPassword)
+    @RequestMapping(value = "updatePassword", method = RequestMethod.POST)
+    public String updatePassword(Model model, String oldPassword, String newPassword)
     {
-        Map<String,Object> map=userService.updatePassword(oldPassword,newPassword);
-        if(map.isEmpty())
+        Map<String, Object> map = userService.updatePassword(oldPassword, newPassword);
+        if (map.isEmpty())
         {
             return "redirect:/logout";
-        }
-        else
+        } else
         {
-            model.addAttribute("newPasswordMsg",map.get("newPasswordMsg"));
-            model.addAttribute("oldPasswordMsg",map.get("oldPasswordMsg"));
+            model.addAttribute("newPasswordMsg", map.get("newPasswordMsg"));
+            model.addAttribute("oldPasswordMsg", map.get("oldPasswordMsg"));
             return "/site/setting";
         }
+    }
+
+    //个人主页
+    @RequestMapping(value = "/profile/{userId}", method = RequestMethod.GET)
+    public String getProfilePage(@PathVariable("userId") int userId, Model model)
+    {
+        User user = userService.getById(userId);
+        if (user == null)
+        {
+            throw new RuntimeException("该用户不存在！");
+        }
+        //用户
+        model.addAttribute("user", user);
+        //点赞数量
+        int likeCount = likeService.findUserLikeCount(userId);
+        model.addAttribute("likeCount", likeCount);
+        // 关注数量
+        long followeeCount = followService.findFolloweeCount(userId, ENTITY_TYPE_USER);
+        model.addAttribute("followeeCount", followeeCount);
+        // 粉丝数量
+        long followerCount = followService.findFollowerCount(ENTITY_TYPE_USER, userId);
+        model.addAttribute("followerCount", followerCount);
+        // 是否已关注
+        boolean hasFollowed = false;
+        if (HostUtil.getUser() != null)
+        {
+            hasFollowed = followService.hasFollowed(HostUtil.getUser().getId(), ENTITY_TYPE_USER, userId);
+        }
+        model.addAttribute("hasFollowed", hasFollowed);
+
+        return "/site/profile";
     }
 }
