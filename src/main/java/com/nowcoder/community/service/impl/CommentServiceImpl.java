@@ -81,4 +81,28 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
         return isSuccess==true?1:0;
     }
+
+    @Override
+    public int findCommentCountByUserId(int userId)
+    {
+        LambdaQueryWrapper<Comment> wrapper=new LambdaQueryWrapper<>();
+        wrapper.eq(Comment::getStatus,0)
+                .eq(Comment::getUserId,userId);
+        int count=this.count(wrapper);
+        return count;
+    }
+
+    @Override
+    public List<Comment> findCommentByUserId(int userId, int offset, int limit)
+    {
+        int pageNumber=offset;
+        int pageSize=limit;
+        Page<Comment> page=new Page<>(pageNumber,pageSize);
+        LambdaQueryWrapper<Comment> wrapper=new LambdaQueryWrapper<>();
+        wrapper.eq(Comment::getStatus,0)
+                .eq(Comment::getUserId,userId)
+                .orderByDesc(Comment::getCreateTime);
+        this.page(page,wrapper);
+        return page.getRecords();
+    }
 }

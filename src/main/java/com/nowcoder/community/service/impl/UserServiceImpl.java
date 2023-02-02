@@ -8,13 +8,11 @@ import com.nowcoder.community.entity.LoginTicket;
 import com.nowcoder.community.entity.User;
 import com.nowcoder.community.service.LoginTicketService;
 import com.nowcoder.community.service.UserService;
-import com.nowcoder.community.util.CommunityConstant;
-import com.nowcoder.community.util.CommunityUtil;
-import com.nowcoder.community.util.HostUtil;
-import com.nowcoder.community.util.MailClient;
+import com.nowcoder.community.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -26,6 +24,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author aiolia
@@ -48,7 +47,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private String contextPath;
 
     @Autowired
-    private LoginTicketService loginTicketService;
+    private RedisTemplate redisTemplate;
 
     @Autowired
     private Producer kaptchaProducer;
@@ -126,6 +125,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         {
             user.setStatus(1);
             updateById(user);
+
             return ACTIVATION_SUCCESS;
         } else
         {
@@ -176,7 +176,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         loginTicket.setTicket(CommunityUtil.generateUUID());
         loginTicket.setStatus(0);
         loginTicket.setExpired(new Date(System.currentTimeMillis()+expiredSeconds*1000));
-        loginTicketService.save(loginTicket);
+
+        String redisKey= RedisKeyUtil.getTicketKey(loginTicket.getTicket());
+        redisTemplate.opsForValue().set(redisKey,loginTicket);
 
         map.put("ticket",loginTicket.getTicket());
 
@@ -186,11 +188,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public void logout(String ticket)
     {
-        LambdaQueryWrapper<LoginTicket> wrapper=new LambdaQueryWrapper<>();
-        wrapper.eq(LoginTicket::getTicket,ticket);
-        LoginTicket loginTicket=new LoginTicket();
+        String redisKey= RedisKeyUtil.getTicketKey(ticket);
+        LoginTicket loginTicket=(LoginTicket)redisTemplate.opsForValue().get(redisKey);
         loginTicket.setStatus(1);
-        loginTicketService.update(loginTicket,wrapper);
+        redisTemplate.opsForValue().set(redisKey,loginTicket);
     }
 
     @Override
@@ -258,9 +259,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public LoginTicket findLoginTicket(String ticket)
     {
-        LambdaQueryWrapper<LoginTicket> wrapper=new LambdaQueryWrapper<>();
-        wrapper.eq(LoginTicket::getTicket,ticket);
-        return loginTicketService.getOne(wrapper);
+        String redisKey= RedisKeyUtil.getTicketKey(ticket);
+        return (LoginTicket) redisTemplate.opsForValue().get(redisKey);
     }
 
     @Override
@@ -290,5 +290,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setPassword(CommunityUtil.md5(newPassword+user.getSalt()));
         this.updateById(user);
         return map;
+    }
+
+    public User getCache(int userId)
+    {
+        String redisKey=RedisKeyUtil.getUserKey(userId);
+        return (User)redisTemplate.opsForValue().get(redisKey);
+    }
+
+    public User initCache(int userId)
+    {
+        User user= this.getById(userId);
+        String redisKey=RedisKeyUtil.getUserKey(userId);
+        redisTemplate.opsForValue().set(redisKey,user,3600, TimeUnit.SECONDS);
+        return user;
+    }
+
+    public void clearCache(int userId)
+    {
+        String redisKey=RedisKeyUtil.getUserKey(userId);
+        redisTemplate.delete(redisKey);
     }
 }

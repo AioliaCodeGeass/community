@@ -16,7 +16,7 @@ import java.io.PrintWriter;
  * @version 1.0
  * @create 2023/1/31
  */
-@Slf4j
+/*@Slf4j
 @ControllerAdvice
 public class ExceptionAdvice
 {
@@ -40,4 +40,4 @@ public class ExceptionAdvice
             response.sendRedirect(request.getContextPath()+"/error/500");
         }
     }
-}
+}*/

@@ -3,10 +3,12 @@ package com.nowcoder.community.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.nowcoder.community.entity.LoginTicket;
 import com.nowcoder.community.entity.User;
+import com.nowcoder.community.util.RedisKeyUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author aiolia
@@ -30,4 +32,10 @@ public interface UserService extends IService<User>
     public LoginTicket findLoginTicket(String ticket);
 
     public Map<String, Object> updatePassword(String oldPassword, String newPassword);
+
+    public User getCache(int userId);
+
+    public User initCache(int userId);
+
+    public void clearCache(int userId);
 }

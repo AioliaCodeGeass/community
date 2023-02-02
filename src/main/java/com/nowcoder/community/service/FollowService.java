@@ -1,5 +1,8 @@
 package com.nowcoder.community.service;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author aiolia
  * @version 1.0
@@ -21,4 +24,11 @@ public interface FollowService
 
     // 查询当前用户是否已关注该实体
     public boolean hasFollowed(int userId, int entityType, int entityId);
+
+    //查询某个用户关注的人
+    public List<Map<String,Object>> findFollowees(int userId, int offset, int limit);
+
+    //查询某用户的粉丝
+    public List<Map<String,Object>> findFollowers(int userId, int offset, int limit);
+
 }

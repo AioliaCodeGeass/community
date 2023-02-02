@@ -149,4 +149,37 @@ public class DiscussPostController implements CommunityConstant
 
         return "/site/discuss-detail";
     }
+
+    @RequestMapping(value="/discussPosts/{userId}",method = RequestMethod.GET)
+    public String getDiscussPosts(@PathVariable("userId") int userId, Page page, Model model)
+    {
+        User user = userService.getById(userId);
+        if (user == null)
+        {
+            throw new RuntimeException("该用户不存在！");
+        }
+        model.addAttribute("user", user);
+        page.setLimit(5);
+        page.setPath("/discuss/discussPosts/" + userId);
+        page.setRows((int) discussPostService.findDiscussPostRows(userId));
+
+        List<DiscussPost> list= discussPostService.findDiscussPosts(userId,page.getCurrent(),page.getLimit());
+        List<Map<String,Object>> discussPosts=new ArrayList<>();
+        if(list!=null)
+        {
+            for(DiscussPost post:list)
+            {
+                Map<String,Object> map=new HashMap<>();
+                map.put("post",post);
+                long likeCount=likeService.findEntityLikeCount(ENTITY_TYPE_POST,post.getId());
+                map.put("likeCount",likeCount);
+
+                discussPosts.add(map);
+            }
+        }
+        model.addAttribute("discussPosts",discussPosts);
+        model.addAttribute("discussPostCount",page.getRows());
+
+        return "/site/my-post";
+    }
 }

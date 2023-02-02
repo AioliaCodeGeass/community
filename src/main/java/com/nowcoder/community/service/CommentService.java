@@ -17,4 +17,9 @@ public interface CommentService extends IService<Comment>
     public int findCommentCount(int entityType,int entityId);
 
     public int addComment(Comment comment);
+
+    public int findCommentCountByUserId(int userId);
+
+    public List<Comment> findCommentByUserId(int userId, int offset, int limit);
+
 }

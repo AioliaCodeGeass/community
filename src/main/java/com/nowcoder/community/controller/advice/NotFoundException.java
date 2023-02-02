@@ -16,7 +16,7 @@ import java.util.Map;
  * @version 1.0
  * @create 2023/1/31
  */
-@Controller
+/*@Controller
 public class NotFoundException implements ErrorController
 {
 
@@ -31,4 +31,4 @@ public class NotFoundException implements ErrorController
     {
         response.sendRedirect(request.getContextPath() + "/error/404");
     }
-}
+}*/
