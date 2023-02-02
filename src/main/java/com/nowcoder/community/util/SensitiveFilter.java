@@ -124,6 +124,7 @@ public class SensitiveFilter
             } else
             {
                 position++;
+
             }
             // 提前判断postion是不是到达结尾，要跳出while,如果是，则说明begin-position这个区间不是敏感词，但是里面不一定没有
             if (position == text.length() && begin != position)

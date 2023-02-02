@@ -3,12 +3,9 @@ package com.nowcoder.community.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.nowcoder.community.entity.LoginTicket;
 import com.nowcoder.community.entity.User;
-import com.nowcoder.community.util.RedisKeyUtil;
-
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+
 
 /**
  * @author aiolia
@@ -17,6 +14,8 @@ import java.util.concurrent.TimeUnit;
  */
 public interface UserService extends IService<User>
 {
+    public User findUserById(int id);
+
     public Map<String,Object> register(User user);
 
     public int activation(int userId,String code);

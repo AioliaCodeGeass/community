@@ -35,6 +35,9 @@ import java.util.concurrent.TimeUnit;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService, CommunityConstant
 {
     @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
     private MailClient mailClient;
 
     @Autowired
@@ -51,6 +54,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private Producer kaptchaProducer;
+
+    @Override
+    public User findUserById(int id)
+    {
+        User user = getCache(id);
+        if (user == null)
+        {
+            user = initCache(id);
+        }
+        return user;
+    }
 
     @Override
     public Map<String, Object> register(User user)
@@ -123,9 +137,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return ACTIVATION_REPEAT;
         } else if (user.getActivationCode().equals(code))
         {
-            user.setStatus(1);
-            updateById(user);
-
+//            user.setStatus(1);
+//            updateById(user);
+            userMapper.updateStatus(userId, 1);
             return ACTIVATION_SUCCESS;
         } else
         {
@@ -149,8 +163,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return map;
         }
         // 验证账号
-        LambdaQueryWrapper<User> wrapper=new LambdaQueryWrapper<>();
-        wrapper.eq(User::getUsername,username);
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getUsername, username);
         User user = this.getOne(wrapper);
         if (user == null)
         {
@@ -171,16 +185,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return map;
         }
         //生成登录凭证
-        LoginTicket loginTicket=new LoginTicket();
+        LoginTicket loginTicket = new LoginTicket();
         loginTicket.setUserId(user.getId());
         loginTicket.setTicket(CommunityUtil.generateUUID());
         loginTicket.setStatus(0);
-        loginTicket.setExpired(new Date(System.currentTimeMillis()+expiredSeconds*1000));
+        loginTicket.setExpired(new Date(System.currentTimeMillis() + expiredSeconds * 1000));
 
-        String redisKey= RedisKeyUtil.getTicketKey(loginTicket.getTicket());
-        redisTemplate.opsForValue().set(redisKey,loginTicket);
+        String redisKey = RedisKeyUtil.getTicketKey(loginTicket.getTicket());
+        redisTemplate.opsForValue().set(redisKey, loginTicket);
 
-        map.put("ticket",loginTicket.getTicket());
+        map.put("ticket", loginTicket.getTicket());
 
         return map;
     }
@@ -188,24 +202,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public void logout(String ticket)
     {
-        String redisKey= RedisKeyUtil.getTicketKey(ticket);
-        LoginTicket loginTicket=(LoginTicket)redisTemplate.opsForValue().get(redisKey);
+        String redisKey = RedisKeyUtil.getTicketKey(ticket);
+        LoginTicket loginTicket = (LoginTicket) redisTemplate.opsForValue().get(redisKey);
         loginTicket.setStatus(1);
-        redisTemplate.opsForValue().set(redisKey,loginTicket);
+        redisTemplate.opsForValue().set(redisKey, loginTicket);
     }
 
     @Override
-    public Map<String,Object> getKaptcha(String email, HttpSession session)
+    public Map<String, Object> getKaptcha(String email, HttpSession session)
     {
         Map<String, Object> map = new HashMap<>();
         //空值处理
-        if(StringUtils.isBlank(email))
+        if (StringUtils.isBlank(email))
         {
             map.put("emailMsg", "邮箱不能为空!");
             return map;
         }
         //验证邮箱
-        LambdaQueryWrapper<User>wrapper = new LambdaQueryWrapper<>();
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getEmail, email);
         User user = this.getOne(wrapper);
         if (user == null)
@@ -214,11 +228,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return map;
         }
         //生成验证码
-        String text=kaptchaProducer.createText();
+        String text = kaptchaProducer.createText();
         //将验证码存入session
-        session.setAttribute("kaptcha",text);
+        session.setAttribute("kaptcha", text);
         //将当前邮箱存入session
-        session.setAttribute("email",email);
+        session.setAttribute("email", email);
         //发送重置密码邮件
         Context context = new Context();
         context.setVariable("email", email);
@@ -226,7 +240,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         context.setVariable("code", code);
         String content = templateEngine.process("/mail/forget", context);
         mailClient.sendMail(email, "重置密码", content);
-        map.put("emailMsg","验证码发送成功，请查看邮箱!");
+        map.put("emailMsg", "验证码发送成功，请查看邮箱!");
 
         return map;
     }
@@ -236,22 +250,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     {
         Map<String, Object> map = new HashMap<>();
         //空值处理
-        if(StringUtils.isBlank(email))
+        if (StringUtils.isBlank(email))
         {
             map.put("emailMsg", "邮箱不能为空!");
             return map;
         }
-        if(StringUtils.isBlank(password))
+        if (StringUtils.isBlank(password))
         {
             map.put("passwordMsg", "密码不能为空!");
             return map;
         }
         //重置密码
-        LambdaQueryWrapper<User> wrapper=new LambdaQueryWrapper<>();
-        wrapper.eq(User::getEmail,email);
-        User user=this.getOne(wrapper);
-        user.setPassword(CommunityUtil.md5(password+ user.getSalt()));
-        this.update(user,wrapper);
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getEmail, email);
+        User user = this.getOne(wrapper);
+        user.setPassword(CommunityUtil.md5(password + user.getSalt()));
+        userMapper.updatePassword(user.getId(), user.getPassword());
+//        this.update(user,wrapper);
 
         return map;
     }
@@ -259,7 +274,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public LoginTicket findLoginTicket(String ticket)
     {
-        String redisKey= RedisKeyUtil.getTicketKey(ticket);
+        String redisKey = RedisKeyUtil.getTicketKey(ticket);
         return (LoginTicket) redisTemplate.opsForValue().get(redisKey);
     }
 
@@ -279,36 +294,37 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return map;
         }
         //验证原密码
-        User user= HostUtil.getUser();
-        String md5OldPassword=CommunityUtil.md5(oldPassword+user.getSalt());
-        if(!md5OldPassword.equals(user.getPassword()))
+        User user = HostUtil.getUser();
+        String md5OldPassword = CommunityUtil.md5(oldPassword + user.getSalt());
+        if (!md5OldPassword.equals(user.getPassword()))
         {
-            map.put("oldPasswordMsg","原密码错误！");
+            map.put("oldPasswordMsg", "原密码错误！");
             return map;
         }
         //修改密码
-        user.setPassword(CommunityUtil.md5(newPassword+user.getSalt()));
-        this.updateById(user);
+        user.setPassword(CommunityUtil.md5(newPassword + user.getSalt()));
+        userMapper.updatePassword(user.getId(), user.getPassword());
+//        this.updateById(user);
         return map;
     }
 
     public User getCache(int userId)
     {
-        String redisKey=RedisKeyUtil.getUserKey(userId);
-        return (User)redisTemplate.opsForValue().get(redisKey);
+        String redisKey = RedisKeyUtil.getUserKey(userId);
+        return (User) redisTemplate.opsForValue().get(redisKey);
     }
 
     public User initCache(int userId)
     {
-        User user= this.getById(userId);
-        String redisKey=RedisKeyUtil.getUserKey(userId);
-        redisTemplate.opsForValue().set(redisKey,user,3600, TimeUnit.SECONDS);
+        User user = this.getById(userId);
+        String redisKey = RedisKeyUtil.getUserKey(userId);
+        redisTemplate.opsForValue().set(redisKey, user, 3600, TimeUnit.SECONDS);
         return user;
     }
 
     public void clearCache(int userId)
     {
-        String redisKey=RedisKeyUtil.getUserKey(userId);
+        String redisKey = RedisKeyUtil.getUserKey(userId);
         redisTemplate.delete(redisKey);
     }
 }
