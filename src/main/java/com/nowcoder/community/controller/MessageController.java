@@ -184,6 +184,7 @@ public class MessageController
         //查询评论类通知
         Message message = messageService.findLatestNotice(user.getId(), TOPIC_COMMENT);
         Map<String, Object> messageVO = new HashMap<>();
+        messageVO.put("message",null);
         if (message != null)
         {
             messageVO.put("message", message);
@@ -206,6 +207,7 @@ public class MessageController
         // 查询点赞类通知
         message = messageService.findLatestNotice(user.getId(), TOPIC_LIKE);
         messageVO = new HashMap<>();
+        messageVO.put("message",null);
         if (message != null)
         {
             messageVO.put("message", message);
@@ -229,6 +231,7 @@ public class MessageController
         // 查询关注类通知
         message = messageService.findLatestNotice(user.getId(), TOPIC_FOLLOW);
         messageVO = new HashMap<>();
+        messageVO.put("message",null);
         if (message != null)
         {
             messageVO.put("message", message);

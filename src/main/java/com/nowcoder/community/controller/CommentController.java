@@ -15,8 +15,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.*;
 
-import static com.nowcoder.community.util.CommunityConstant.ENTITY_TYPE_POST;
-import static com.nowcoder.community.util.CommunityConstant.TOPIC_COMMENT;
+import static com.nowcoder.community.util.CommunityConstant.*;
 
 /**
  * @author aiolia
@@ -65,6 +64,15 @@ public class CommentController
             event.setEntityUserId(target.getUserId());
         }
         eventProducer.fireEvent(event);
+        if(comment.getEntityType()==ENTITY_TYPE_POST)
+        {
+            event=new Event()
+                    .setTopic(TOPIC_PUBLISH)
+                    .setUserId(user.getId())
+                    .setEntityType(ENTITY_TYPE_POST)
+                    .setEntityId(discussPostId);
+            eventProducer.fireEvent(event);
+        }
 
         return "redirect:/discuss/detail/"+discussPostId;
     }
