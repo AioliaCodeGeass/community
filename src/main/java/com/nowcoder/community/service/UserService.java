@@ -3,7 +3,10 @@ package com.nowcoder.community.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.nowcoder.community.entity.LoginTicket;
 import com.nowcoder.community.entity.User;
+import org.springframework.security.core.GrantedAuthority;
+
 import javax.servlet.http.HttpSession;
+import java.util.Collection;
 import java.util.Map;
 
 
@@ -37,4 +40,6 @@ public interface UserService extends IService<User>
     public User initCache(int userId);
 
     public void clearCache(int userId);
+
+    public Collection<? extends GrantedAuthority> getAuthorities(int userId);
 }

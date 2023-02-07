@@ -42,6 +42,29 @@ spring:
     elasticsearch:
       cluster-name: nowcoder
       cluster-nodes: localhost:9300
+  task:
+    execution:
+      pool:
+        core-size: 5
+        max-size: 15
+        queue-capacity: 100
+    scheduling:
+      pool:
+        size: 5
+  quartz:
+    job-store-type: jdbc
+    scheduler-name: communityScheduler
+    properties:
+      org:
+        quartz:
+          scheduler: instanceId=AUTO
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            isClustered: true
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 5
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
@@ -59,4 +82,26 @@ community:
   path:
     domain: http://localhost:8081
     upload: D:/JavaEE/牛客论坛/upload
+
+wk:
+  image:
+    command: D:/developer_tools/wkhtmltopdf/bin/wkhtmltoimage
+    storage: D:/developer_tools/wkhtmltopdf/data/wk-images
+
+qiniu:
+  key:
+    access: d93J8uI9tkrHEVFjve0noEeO2HOmp1zNSnROKlkW
+    secret: OInvuQ3IKk7hih2we4QwGTv4duNF-kwhnau4BRRz
+  bucket:
+    header:
+      name: aiolia-community-header
+      url: http://rpovtogcl.hb-bkt.clouddn.com
+    share:
+      name: aiolia-community-share
+      url: http://rpovtogcl.hb-bkt.clouddn.com
+
+caffeine:
+  posts:
+    max-size: 15
+    expire-seconds: 180
 

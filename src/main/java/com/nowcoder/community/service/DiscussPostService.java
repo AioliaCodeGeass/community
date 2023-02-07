@@ -14,7 +14,7 @@ import java.util.List;
  */
 public interface DiscussPostService extends IService<DiscussPost>
 {
-    public List<DiscussPost> findDiscussPosts(int userId, int offset, int limit);
+    public List<DiscussPost> findDiscussPosts(int userId, int offset, int limit,int orderMode);
 
     public int findDiscussPostRows(int userId);
 
