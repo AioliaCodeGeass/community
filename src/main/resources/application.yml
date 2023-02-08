@@ -105,3 +105,9 @@ caffeine:
     max-size: 15
     expire-seconds: 180
 
+management:
+  endpoints:
+    web:
+      exposure:
+        exclude: info,caches
+        include: "*"
