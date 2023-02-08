@@ -1,0 +1,113 @@
+server:
+  port: 8081
+  servlet:
+    context-path:
+
+spring:
+  thymeleaf:
+    cache: false
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/community?characterEncoding=utf-8&useSSL=false&serverTimezone=Hongkong
+    username: root
+    password: 123456
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 5
+      idle-timeout: 30000
+  mail:
+    host: smtp.sina.com
+    port: 465
+    username: aiolia_geass@sina.com
+    password: 28c589389c3db012
+    protocol: smtps
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: true
+  redis:
+    database: 0
+    host: 110.41.17.219
+    port: 6379
+    password: aiolia_geass
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: test-consumer-group
+      enable-auto-commit: true
+      auto-commit-interval: 3000
+  data:
+    elasticsearch:
+      cluster-name: nowcoder
+      cluster-nodes: localhost:9300
+  task:
+    execution:
+      pool:
+        core-size: 5
+        max-size: 15
+        queue-capacity: 100
+    scheduling:
+      pool:
+        size: 5
+  quartz:
+    job-store-type: jdbc
+    scheduler-name: communityScheduler
+    properties:
+      org:
+        quartz:
+          scheduler: instanceId=AUTO
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            isClustered: true
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 5
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.nowcoder.community.entity
+  configuration:
+    use-generated-keys: true
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com.nowcoder.community: debug
+  file: D:/JavaEE/牛客论坛/log/community.log
+
+community:
+  path:
+    domain: http://localhost:8081
+    upload: D:/JavaEE/牛客论坛/upload
+
+wk:
+  image:
+    command: D:/developer_tools/wkhtmltopdf/bin/wkhtmltoimage
+    storage: D:/developer_tools/wkhtmltopdf/data/wk-images
+
+qiniu:
+  key:
+    access: d93J8uI9tkrHEVFjve0noEeO2HOmp1zNSnROKlkW
+    secret: OInvuQ3IKk7hih2we4QwGTv4duNF-kwhnau4BRRz
+  bucket:
+    header:
+      name: aiolia-community-header
+      url: http://rpovtogcl.hb-bkt.clouddn.com
+    share:
+      name: aiolia-community-share
+      url: http://rpovtogcl.hb-bkt.clouddn.com
+
+caffeine:
+  posts:
+    max-size: 15
+    expire-seconds: 180
+
+management:
+  endpoints:
+    web:
+      exposure:
+        exclude: info,caches
+        include: "*"
